@@ -32,8 +32,8 @@ pub fn parse_gravity_line(line: &str) -> Option<Box<str>> {
         // example.com
         [d] => *d,
 
-        // 0.0.0.0 example.com
-        [_ip, d] => *d,
+        // 0.0.0.0 example.com (IPv4)
+        [_ip, d] if is_ipv4(_ip) => *d,
 
         _ => return None,
     };
@@ -47,6 +47,14 @@ pub fn parse_gravity_line(line: &str) -> Option<Box<str>> {
     }
 
     normalize_domain(domain)
+}
+
+fn is_ipv4(s: &str) -> bool {
+    let parts: Vec<&str> = s.split('.').collect();
+    if parts.len() != 4 {
+        return false;
+    }
+    parts.iter().all(|p| p.parse::<u8>().is_ok())
 }
 
 /// UNIT TESTS
