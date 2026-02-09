@@ -1,0 +1,9 @@
+[package]
+name = "tmhole"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+rusqlite = { version = "0.30", features = ["bundled"] }
+clap = { version = "4.5", features = ["derive"] }
+anyhow = "1.0"
