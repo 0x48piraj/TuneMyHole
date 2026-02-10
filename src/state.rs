@@ -5,13 +5,15 @@ use std::{fs, path::Path};
 pub struct RunState {
     pub domains_blocked: usize,
     pub last_run: String,
+    pub empty_reference: bool,
 }
 
 impl RunState {
-    pub fn from_selection(domains: &[Box<str>]) -> Self {
+    pub fn from_selection(domains: &[Box<str>], empty_reference: bool) -> Self {
         Self {
             domains_blocked: domains.len(),
             last_run: chrono::Utc::now().to_rfc3339(),
+            empty_reference,
         }
     }
 

@@ -43,9 +43,15 @@ pub fn run() -> Result<()> {
         }
         Command::Status => {
             if let Some(state) = RunState::load(&paths.state) {
-                println!("Tune My Hole 🧠");
+                println!("Tune My Hole");
                 println!("Blocked domains: {}", state.domains_blocked);
                 println!("Last run: {}", state.last_run);
+
+                if state.empty_reference {
+                    println!();
+                    println!("[!] No reference lists found.");
+                    println!("    Drop blocklists into /etc/pihole/tune-my-hole.d/");
+                }
             } else {
                 println!("No runs yet.");
             }

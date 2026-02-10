@@ -12,8 +12,13 @@ use crate::{
 };
 
 pub fn run(paths: &Paths, config: &Config) -> Result<()> {
+    if !paths.ftl_db.exists() {
+        anyhow::bail!("Pi-hole FTL database not found at {:?}", paths.ftl_db);
+    }
+
     let stats = load_domain_stats(&paths.ftl_db)?;
     let reference = load_reference_dir(&paths.reference_dir)?;
+    let empty_reference = reference.is_empty();
 
     let selected = intersect(stats, reference);
 
@@ -25,7 +30,7 @@ pub fn run(paths: &Paths, config: &Config) -> Result<()> {
         }
     }
 
-    let state = RunState::from_selection(&selected);
+    let state = RunState::from_selection(&selected, empty_reference);
     state.write(&paths.state)?;
 
     if config.output.auto_reload {
