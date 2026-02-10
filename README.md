@@ -16,65 +16,132 @@ Instead of blindly blocking millions of domains, this approach produces a small,
 
 The analysis runs entirely offline. Query data never leaves your Pi-hole and blocking decisions remain predictable and transparent.
 
-## Installation
+### Installation
 
-### Requirements
+Tune My Hole is a **Pi-hole companion agent** that installs once and runs automatically.
 
-- Pi-hole
-- Read access to FTL query database
+#### Requirements
 
-### Build
+* Linux system running **Pi-hole**
+* Read access to FTL query database
+* `systemd` _(recommended)_ or `cron`
 
-```bash
-cargo build --release
-```
+#### Install the easy way
 
-
-## Usage
-
-Tune My Hole takes a Pi-hole FTL database and an external blocklist then emits the intersection of domains that are both observed on your network and present in the blocklist.
-
-### Dry run
-
-Analyze the data and print the resulting domains to stdout without writing any files:
+Download the binary matching your system from the _Releases_:
 
 ```bash
-sudo tmhole \
-  --db /etc/pihole/pihole-FTL.db \
-  --blocklist ./oisd_big.txt \
-  --dry-run
+sudo curl -L \
+  https://github.com/0x48piraj/tune-my-hole/releases/download/v0.1.0/tune-my-hole-aarch64-unknown-linux-gnu \
+  -o /usr/local/bin/tune-my-hole
+
+sudo chmod +x /usr/local/bin/tune-my-hole
 ```
 
-This is useful for inspection, auditing or piping into other tools.
+> Note: Replace the target with `armv7-unknown-linux-gnueabihf` for 32-bit Raspberry Pi OS.
 
-### Generate an optimized blocklist
+### Set it up once
 
-Write the resulting domain set directly to Pi-hole's local blocklist:
+Run once:
 
 ```bash
-sudo tmhole \
-  --db /etc/pihole/pihole-FTL.db \
-  --blocklist ./oisd_big.txt \
-  --output /etc/pihole/custom.list
+sudo tune-my-hole init
 ```
 
-After generation, reload Pi-hole for the changes to take effect.
+This will:
 
-Reload Pi-hole:
+* Create `/etc/pihole/tune-my-hole.d/`
+* Install a daily systemd timer (or cron fallback)
+* Create managed state and output files
+
+Tune My Hole now runs automatically.
+
+### Adding reference blocklists
+
+Tune My Hole consumes one or more Pi-hole compatible domain blocklists.
+
+Reference lists live in:
+
+```text
+/etc/pihole/tune-my-hole.d/
+```
+
+Example _(using oisd blocklist)_:
 
 ```bash
-pihole restartdns reload
+sudo curl -sSL https://big.oisd.nl -o /etc/pihole/tune-my-hole.d/oisd.txt
 ```
 
-## Flags
+You can add multiple lists. Tune My Hole will combine them automatically.
 
-| Flag          | Description                     |
-| ------------- | ------------------------------- |
-| `--db`        | Path to FTL query database      |
-| `--blocklist` | Offline domain blocklist        |
-| `--threshold` | Minimum number of hits required |
-| `--output`    | Output file for Pi-hole         |
-| `--dry-run`   | Print results without writing   |
+Reference lists are **inputs only** and are never modified.
+
+### Usage
+
+#### Manual run (optional)
+
+You normally don't need this, but you can run it manually:
+
+```bash
+sudo tune-my-hole run
+```
+
+This will:
+
+* Analyze Pi-hole DNS history
+* Generate a lean, managed blocklist
+* Reload Pi-hole DNS (if enabled)
+
+#### Status (recommended)
+
+Check what **Tune My Hole** has done:
+
+```bash
+tune-my-hole status
+```
+
+Example output:
+
+```
+Tune My Hole
+────────────────────────
+Managed domains: 4,832
+Last run:        2026-02-09T03:00:00Z
+Blocklist path:  /etc/pihole/tune-my-hole.list
+
+[!] No reference lists found.
+    Drop blocklists into:
+    /etc/pihole/tune-my-hole.d/
+```
+
+### Uninstall
+
+To completely remove Tune My Hole:
+
+```bash
+sudo tune-my-hole uninstall
+```
+
+This removes:
+
+* `systemd` timer / `cron` job
+* Managed blocklist
+* State and config files
+
+User blocklists and Pi-hole data are untouched.
+
+### How it works
+
+Tune My Hole:
+
+1. Reads Pi-hole's FTL query database (read-only)
+2. Observes which domains your network actually queries
+3. Intersects those domains with trusted reference lists
+4. Emits a **small, high-confidence** local blocklist
+
+No list hoarding.
+No blind automation.
+Just evidence-based blocking.
 
 ## Philosophy
 
