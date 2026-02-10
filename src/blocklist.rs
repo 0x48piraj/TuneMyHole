@@ -1,6 +1,7 @@
 use std::{
     collections::HashSet,
     fs::File,
+    fs::read_dir,
     io::{BufRead, BufReader},
     path::PathBuf,
 };
@@ -22,4 +23,21 @@ pub fn load_blocklist(path: &PathBuf) -> Result<HashSet<Box<str>>> {
     }
 
     Ok(set)
+}
+
+pub fn load_reference_dir(dir: &PathBuf) -> Result<HashSet<Box<str>>> {
+    let mut out = HashSet::new();
+
+    if !dir.exists() {
+        return Ok(out);
+    }
+
+    for entry in read_dir(dir)? {
+        let path = entry?.path();
+        if path.is_file() {
+            out.extend(load_blocklist(&path)?);
+        }
+    }
+
+    Ok(out)
 }

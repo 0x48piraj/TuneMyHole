@@ -1,38 +1,48 @@
 use std::{
-    collections::HashSet,
     path::PathBuf,
 };
 
 use anyhow::Result;
-use rusqlite::Connection;
+use rusqlite::{Connection, OpenFlags};
 
 use crate::domain::normalize_domain;
 
-pub fn load_allowed_domains(db: &PathBuf) -> Result<HashSet<Box<str>>> {
-    let conn = Connection::open(db)?;
+pub struct DomainStats {
+    pub domain: Box<str>,
+    pub count: u32,
+}
+
+pub fn load_domain_stats(db: &PathBuf) -> Result<Vec<DomainStats>> {
+    let conn = Connection::open_with_flags(
+        db,
+        OpenFlags::SQLITE_OPEN_READ_ONLY,
+    )?;
 
     let mut stmt = conn.prepare(
         r#"
-        SELECT DISTINCT domain
+        SELECT domain, COUNT(*) as cnt
         FROM queries
         WHERE domain IS NOT NULL
           AND status = 0
+        GROUP BY domain
         "#,
     )?;
 
     let rows = stmt.query_map([], |row| {
         let domain: String = row.get(0)?;
-        Ok(domain)
+        let count: u32 = row.get(1)?;
+
+        Ok((domain, count))
     })?;
 
-    let mut set = HashSet::new();
+    let mut out = Vec::new();
 
     for row in rows {
-        let domain = row?;
+        let (domain, count) = row?;
         if let Some(d) = normalize_domain(&domain) {
-            set.insert(d);
+            out.push(DomainStats { domain: d, count });
         }
     }
 
-    Ok(set)
+    Ok(out)
 }

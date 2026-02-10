@@ -1,54 +1,49 @@
-use std::{
-    fs::File,
-    io::Write,
-    path::PathBuf,
-};
-
+use clap::{Parser, Subcommand};
 use anyhow::Result;
-use clap::Parser;
 
 use tmhole::{
-    blocklist::load_blocklist,
-    ftl::load_allowed_domains,
-    intersect::intersect,
+    config::Config,
+    path::Paths,
+    pipeline,
+    state::RunState,
+    install::init_system
 };
 
 #[derive(Parser)]
 #[command(author, version, about)]
-struct Args {
-    /// Path to Pi-hole FTL database
-    #[arg(long)]
-    db: PathBuf,
+struct Cli {
+    #[command(subcommand)]
+    cmd: Command,
+}
 
-    /// External reference blocklist (OISD, HaGeZi, etc.)
-    #[arg(long)]
-    blocklist: PathBuf,
-
-    /// Output file
-    #[arg(long)]
-    output: PathBuf,
-
-    /// Print results without writing file
-    #[arg(long)]
-    dry_run: bool,
+#[derive(Subcommand)]
+enum Command {
+    Run,
+    Status,
+    Init,
 }
 
 fn main() -> Result<()> {
-    let args = Args::parse();
+    let cli = Cli::parse();
+    let paths = Paths::detect();
 
-    let allowed = load_allowed_domains(&args.db)?;
-    let blocklist = load_blocklist(&args.blocklist)?;
-
-    let selected = intersect(allowed, blocklist);
-
-    if args.dry_run {
-        for d in &selected {
-            println!("{d}");
+    match cli.cmd {
+        Command::Init => {
+            init_system(&paths)?;
+            println!("Tune My Hole installed and scheduled.");
         }
-    } else {
-        let mut file = File::create(&args.output)?;
-        for d in &selected {
-            writeln!(file, "{d}")?;
+        Command::Run => {
+            let config = Config::load_or_default(&paths.config);
+            pipeline::run(&paths, &config)?;
+        }
+        Command::Status => {
+            if let Some(state) = RunState::load(&paths.state) {
+                println!("Tune My Hole");
+                println!("Blocked domains: {}", state.domains_blocked);
+                println!("Last run: {}", state.last_run);
+            } else {
+                println!("No runs yet.");
+            }
         }
     }
 
