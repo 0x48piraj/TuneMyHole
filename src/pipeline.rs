@@ -1,5 +1,5 @@
 use anyhow::Result;
-use std::fs::File;
+use std::fs;
 use std::io::Write;
 
 use crate::{
@@ -22,13 +22,18 @@ pub fn run(paths: &Paths, config: &Config) -> Result<()> {
 
     let selected = intersect(stats, reference);
 
+    let tmp_path = paths.managed_list.with_extension("list.tmp");
+
     // Write managed blocklist
     {
-        let mut file = File::create(&paths.managed_list)?;
+        let mut file = fs::File::create(&tmp_path)?;
         for d in &selected {
             writeln!(file, "{d}")?;
         }
     }
+
+    // Replace
+    fs::rename(&tmp_path, &paths.managed_list)?;
 
     let state = RunState::from_selection(&selected, empty_reference);
     state.write(&paths.state)?;
