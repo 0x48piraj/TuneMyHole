@@ -11,8 +11,8 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     strategy:
+      fail-fast: false
       matrix:
         target:
           - x86_64-unknown-linux-gnu
@@ -37,7 +37,23 @@ jobs:
           mkdir -p dist
           cp target/${{ matrix.target }}/release/tmhole dist/tmhole-${{ matrix.target }}
 
-      - name: Publish to GitHub Releases
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tmhole-${{ matrix.target }}
+          path: dist/tmhole-${{ matrix.target }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+
+      - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/*
+          files: dist/**/*
