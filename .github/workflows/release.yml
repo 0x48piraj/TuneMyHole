@@ -32,9 +32,9 @@ jobs:
       - name: Prepare artifact
         run: |
           mkdir -p dist
-          cp target/${{ matrix.target }}/release/tune-my-hole dist/tune-my-hole-${{ matrix.target }}
+          cp target/${{ matrix.target }}/release/tmhole dist/tmhole-${{ matrix.target }}
 
       - name: Publish to GitHub Releases
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/tune-my-hole-${{ matrix.target }}
+          files: dist/tmhole-${{ matrix.target }}
