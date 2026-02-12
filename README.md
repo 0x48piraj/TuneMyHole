@@ -2,9 +2,9 @@
 
 A self-tuning Pi-hole companion that automatically builds lean, region-aware blocklists based on real network behavior.
 
-Tune My Hole analyzes historical DNS traffic from Pi-hole's FTL (Faster Than Light) query database, correlates observed domains with known malicious and tracking sources, and produces a small, high-confidence local blocklist.
+Tune My Hole analyzes historical DNS traffic from Pi-hole's FTL (Faster Than Light) query database, correlates observed domains with known malicious and tracking sources producing a small, high-confidence local blocklist.
 
-This project favors signal over volume and intent over automation. No list hoarding. No guesswork. Just evidence-based blocking.
+This project favors signal over volume. No list hoarding. No guesswork. Just evidence-based blocking.
 
 ## What it does
 
@@ -31,21 +31,19 @@ Tune My Hole is a **Pi-hole companion agent** that installs once and runs automa
 Download the binary matching your system from the _Releases_:
 
 ```bash
-sudo curl -L \
-  https://github.com/0x48piraj/tune-my-hole/releases/download/v0.1.0/tune-my-hole-aarch64-unknown-linux-gnu \
-  -o /usr/local/bin/tune-my-hole
+sudo curl -L https://github.com/0x48piraj/tune-my-hole/releases/download/v0.1.0/tmhole-aarch64-unknown-linux-gnu -o /usr/local/bin/tmhole
 
-sudo chmod +x /usr/local/bin/tune-my-hole
+sudo chmod +x /usr/local/bin/tmhole
 ```
 
-> Note: Replace the target with `armv7-unknown-linux-gnueabihf` for 32-bit Raspberry Pi OS.
+> Note: Replace the target with [`tmhole-armv7-unknown-linux-gnueabihf`](https://github.com/0x48piraj/tune-my-hole/releases/download/v0.1.0/tmhole-armv7-unknown-linux-gnueabihf) for 32-bit Raspberry Pi OS.
 
 ### Set it up once
 
 Run once:
 
 ```bash
-sudo tune-my-hole init
+sudo tmhole init
 ```
 
 This will:
@@ -66,10 +64,10 @@ Reference lists live in:
 /etc/pihole/tune-my-hole.d/
 ```
 
-Example _(using oisd blocklist)_:
+Example _(using AdguardDNS blocklist)_:
 
 ```bash
-sudo curl -sSL https://big.oisd.nl -o /etc/pihole/tune-my-hole.d/oisd.txt
+sudo curl -sSL https://v.firebog.net/hosts/AdguardDNS.txt -o /etc/pihole/tune-my-hole.d/AdguardDNS.txt
 ```
 
 You can add multiple lists. Tune My Hole will combine them automatically.
@@ -83,7 +81,7 @@ Reference lists are **inputs only** and are never modified.
 You normally don't need this, but you can run it manually:
 
 ```bash
-sudo tune-my-hole run
+sudo tmhole run
 ```
 
 This will:
@@ -97,7 +95,7 @@ This will:
 Check what **Tune My Hole** has done:
 
 ```bash
-tune-my-hole status
+sudo tmhole status
 ```
 
 Example output:
@@ -119,7 +117,7 @@ Blocklist path:  /etc/pihole/tune-my-hole.list
 To completely remove Tune My Hole:
 
 ```bash
-sudo tune-my-hole uninstall
+sudo tmhole uninstall
 ```
 
 This removes:
@@ -157,4 +155,4 @@ Tune My Hole takes a disgustingly straightforward approach:
 - Validate those domains against known bad signals
 - Block only what is both relevant *and* high-confidence
 
-The goal is not maximum block count. The goal is **correctness, performance and privacy**.
+The goal is not maximum block count. The goal is **accuracy, performance and privacy**.
